@@ -35,7 +35,15 @@ def main():
     print("Starting Telegram bot with long polling...")
     app = ApplicationBuilder().token(TOKEN).build()
     register_handlers(app)
-    app.run_polling(allowed_updates=["message", "edited_message", "callback_query"])
+    app.run_polling(allowed_updates=[
+        "message",
+        "edited_message",
+        "callback_query",
+        "business_connection",
+        "business_message",
+        "edited_business_message",
+        "deleted_business_messages",
+    ])
 
 
 if __name__ == "__main__":
