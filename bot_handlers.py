@@ -27,12 +27,13 @@ logger = logging.getLogger(__name__)
 BUSINESS_OWNER_USER_IDS = {}
 
 # ── Emoji constants ─────────────────────────────────────────────────────────────
-EMOJI_GREETING   = "👋"
-EMOJI_QR_CREATE  = "📋"
-EMOJI_QR_SCAN    = "📷"
-EMOJI_TTS        = "🔊"
-EMOJI_TRANSLATE  = "🌐"
-PRIMARY_EMOJI    = EMOJI_QR_CREATE
+EMOJI_GREETING        = '<tg-emoji emoji-id="5472055112702629499">👋</tg-emoji>'
+EMOJI_QR_CREATE       = '<tg-emoji emoji-id="4954458300235121703">📋</tg-emoji>'
+EMOJI_QR_SCAN         = "📷"
+EMOJI_TTS             = "🔊"
+EMOJI_TRANSLATE       = "🌐"
+PRIMARY_EMOJI         = EMOJI_QR_CREATE
+BTN_QR_CREATE         = "📋"
 
 # ── Translation languages ───────────────────────────────────────────────────────
 LANGUAGES = {
@@ -114,7 +115,7 @@ _load_prefs()
 def main_menu_keyboard():
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(f"{EMOJI_QR_CREATE} បង្កើត QR", callback_data="action_generate"),
+            InlineKeyboardButton(f"{BTN_QR_CREATE} បង្កើត QR", callback_data="action_generate"),
             InlineKeyboardButton(f"{EMOJI_QR_SCAN} ស្កេន QR Code", callback_data="action_scan"),
         ],
         [
