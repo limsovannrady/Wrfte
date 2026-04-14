@@ -259,29 +259,25 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "tts_male":
         set_gender(user.id, "male")
         context.user_data["state"] = "awaiting_tts"
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="🔊 <b>Text to Voice</b>\n\n"
-                 "សំឡេងបច្ចុប្បន្ន: <b>👨 សំឡេងប្រុស</b>\n\n"
-                 "សូមផ្ញើ <b>Text</b> ណាមួយ:",
+        await query.edit_message_text(
+            "🔊 <b>Text to Voice</b>\n\n"
+            "សំឡេងបច្ចុប្បន្ន: <b>👨 សំឡេងប្រុស</b>\n\n"
+            "សូមផ្ញើ <b>Text</b> ណាមួយ ហើយខ្ញុំនឹងបំប្លែងជាសំឡេង\n"
+            "<i>(គាំទ្រ ខ្មែរ, English, Thai, 日本語 និងភាសាជាច្រើនទៀត)</i>",
             parse_mode="HTML",
             reply_markup=tts_keyboard(),
-            business_connection_id=biz_id,
-            direct_messages_topic_id=topic_id,
         )
 
     elif data == "tts_female":
         set_gender(user.id, "female")
         context.user_data["state"] = "awaiting_tts"
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="🔊 <b>Text to Voice</b>\n\n"
-                 "សំឡេងបច្ចុប្បន្ន: <b>👩 សំឡេងស្រី</b>\n\n"
-                 "សូមផ្ញើ <b>Text</b> ណាមួយ:",
+        await query.edit_message_text(
+            "🔊 <b>Text to Voice</b>\n\n"
+            "សំឡេងបច្ចុប្បន្ន: <b>👩 សំឡេងស្រី</b>\n\n"
+            "សូមផ្ញើ <b>Text</b> ណាមួយ ហើយខ្ញុំនឹងបំប្លែងជាសំឡេង\n"
+            "<i>(គាំទ្រ ខ្មែរ, English, Thai, 日本語 និងភាសាជាច្រើនទៀត)</i>",
             parse_mode="HTML",
             reply_markup=tts_keyboard(),
-            business_connection_id=biz_id,
-            direct_messages_topic_id=topic_id,
         )
 
     elif data == "action_back":
