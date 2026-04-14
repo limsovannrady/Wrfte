@@ -1,7 +1,7 @@
 import logging
 import os
 
-from telegram import Update, constants
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, constants
 from telegram.ext import (
     ApplicationBuilder,
     BusinessConnectionHandler,
@@ -112,6 +112,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text=f"សួស្តី {update.effective_user.first_name}",
         business_connection_id=getattr(message, "business_connection_id", None),
         direct_messages_topic_id=direct_messages_topic_id(message),
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Reply", callback_data="reply")]]
+        ),
     )
 
 
@@ -163,6 +166,9 @@ async def business_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text=reply,
         business_connection_id=message.business_connection_id,
         direct_messages_topic_id=topic_id,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Reply", callback_data="reply")]]
+        ),
     )
 
 
