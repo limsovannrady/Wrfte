@@ -215,11 +215,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     biz_id = getattr(query.message, "business_connection_id", None)
     topic_id = getattr(query.message, "direct_messages_topic_id", None)
 
-    # Remove buttons from the old menu message so it stays clean
-    try:
-        await query.edit_message_reply_markup(reply_markup=None)
-    except Exception:
-        pass
 
     if data == "action_generate":
         log_activity(user, "ជ្រើស បង្កើត QR", "")
