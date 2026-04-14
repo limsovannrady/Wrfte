@@ -736,10 +736,10 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "edge-tts", specifier = ">=7.2.8" },
-    { name = "h2", specifier = ">=4.3.0" },
-    { name = "imageio-ffmpeg", specifier = ">=0.6.0" },
-    { name = "langdetect", specifier = ">=1.0.9" },
+    { name = "edge-tts" },
+    { name = "h2", specifier = ">=4.0" },
+    { name = "imageio-ffmpeg" },
+    { name = "langdetect" },
     { name = "pillow", specifier = ">=12.1.1" },
     { name = "python-telegram-bot", specifier = ">=22.7" },
     { name = "qrcode", specifier = ">=8.2" },

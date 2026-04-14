@@ -12,4 +12,5 @@ dependencies = [
     "langdetect",
     "imageio-ffmpeg",
     "h2>=4.0",
+    "telegram>=0.0.1",
 ]
