@@ -3,7 +3,7 @@ import logging
 import os
 import asyncio
 import qrcode
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, constants
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyParameters, Update, constants
 from telegram.ext import (
     Application,
     BusinessConnectionHandler,
@@ -110,7 +110,7 @@ async def is_business_owner_message(message, context: ContextTypes.DEFAULT_TYPE)
 
 
 # ── Menu sender ────────────────────────────────────────────────────────────────
-async def send_menu(context: ContextTypes.DEFAULT_TYPE, chat_id, user, biz_id=None, topic_id=None):
+async def send_menu(context: ContextTypes.DEFAULT_TYPE, chat_id, user, biz_id=None, topic_id=None, reply_to_msg_id=None):
     last_name = getattr(user, "last_name", "") or ""
     first_name = getattr(user, "first_name", "") or ""
     name = last_name or first_name or "បង"
@@ -131,6 +131,7 @@ async def send_menu(context: ContextTypes.DEFAULT_TYPE, chat_id, user, biz_id=No
         reply_markup=main_menu_keyboard(),
         business_connection_id=biz_id,
         direct_messages_topic_id=topic_id,
+        reply_parameters=ReplyParameters(message_id=reply_to_msg_id) if reply_to_msg_id else None,
     )
 
 
@@ -151,7 +152,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         business_connection_id=biz_id,
     )
     context.user_data["state"] = None
-    await send_menu(context, message.chat_id, user, biz_id, topic_id)
+    await send_menu(context, message.chat_id, user, biz_id, topic_id, reply_to_msg_id=message.message_id)
 
 
 async def business_connection_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -185,22 +186,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         business_connection_id=biz_id,
     )
 
+    msg_id = message.message_id
+
     if state == "awaiting_text" and message.text:
-        await _generate_qr(context, message, user, biz_id, topic_id)
+        await _generate_qr(context, message, user, biz_id, topic_id, msg_id)
         context.user_data["state"] = None
         return
 
     if state == "awaiting_photo" and message.photo:
-        await _scan_qr(context, message, user, biz_id, topic_id)
+        await _scan_qr(context, message, user, biz_id, topic_id, msg_id)
         context.user_data["state"] = None
         return
 
     if state == "awaiting_tts" and message.text:
-        await _synthesize_voice(context, message, user, biz_id, topic_id)
+        await _synthesize_voice(context, message, user, biz_id, topic_id, msg_id)
         return
 
     log_activity(user, "ទទួល Message", (message.text or "")[:80])
-    await send_menu(context, message.chat_id, user, biz_id, topic_id)
+    await send_menu(context, message.chat_id, user, biz_id, topic_id, reply_to_msg_id=msg_id)
 
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -283,7 +286,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ── QR generation ──────────────────────────────────────────────────────────────
-async def _generate_qr(context, message, user, biz_id, topic_id):
+async def _generate_qr(context, message, user, biz_id, topic_id, reply_to_msg_id=None):
     text = message.text
     log_activity(user, "បង្កើត QR Code", text[:80])
     await context.bot.send_chat_action(
@@ -302,12 +305,14 @@ async def _generate_qr(context, message, user, biz_id, topic_id):
             business_connection_id=biz_id,
             direct_messages_topic_id=topic_id,
             reply_markup=main_menu_keyboard(),
+            reply_parameters=ReplyParameters(message_id=reply_to_msg_id) if reply_to_msg_id else None,
         )
 
 
 # ── QR scanning ────────────────────────────────────────────────────────────────
-async def _scan_qr(context, message, user, biz_id, topic_id):
+async def _scan_qr(context, message, user, biz_id, topic_id, reply_to_msg_id=None):
     log_activity(user, "ស្កេន QR Code", "")
+    quote = ReplyParameters(message_id=reply_to_msg_id) if reply_to_msg_id else None
     if not ZXING_AVAILABLE:
         await context.bot.send_message(
             chat_id=message.chat_id,
@@ -315,6 +320,7 @@ async def _scan_qr(context, message, user, biz_id, topic_id):
             business_connection_id=biz_id,
             direct_messages_topic_id=topic_id,
             reply_markup=main_menu_keyboard(),
+            reply_parameters=quote,
         )
         return
     photo = await message.photo[-1].get_file()
@@ -333,6 +339,7 @@ async def _scan_qr(context, message, user, biz_id, topic_id):
                 business_connection_id=biz_id,
                 direct_messages_topic_id=topic_id,
                 reply_markup=main_menu_keyboard(),
+                reply_parameters=quote,
             )
         else:
             log_activity(user, "ស្កេន QR Code", "មិនអាចអាន")
@@ -342,6 +349,7 @@ async def _scan_qr(context, message, user, biz_id, topic_id):
                 business_connection_id=biz_id,
                 direct_messages_topic_id=topic_id,
                 reply_markup=main_menu_keyboard(),
+                reply_parameters=quote,
             )
     except Exception as e:
         logger.error("Decode error: %s", e)
@@ -351,13 +359,15 @@ async def _scan_qr(context, message, user, biz_id, topic_id):
             business_connection_id=biz_id,
             direct_messages_topic_id=topic_id,
             reply_markup=main_menu_keyboard(),
+            reply_parameters=quote,
         )
 
 
 # ── Text-to-Voice ──────────────────────────────────────────────────────────────
-async def _synthesize_voice(context, message, user, biz_id, topic_id):
+async def _synthesize_voice(context, message, user, biz_id, topic_id, reply_to_msg_id=None):
     text = message.text
     log_activity(user, "Text to Voice", text[:80])
+    quote = ReplyParameters(message_id=reply_to_msg_id) if reply_to_msg_id else None
 
     await context.bot.send_chat_action(
         chat_id=message.chat_id,
@@ -383,6 +393,7 @@ async def _synthesize_voice(context, message, user, biz_id, topic_id):
                 business_connection_id=biz_id,
                 direct_messages_topic_id=topic_id,
                 reply_markup=tts_keyboard(),
+                reply_parameters=quote,
             )
         else:
             if is_mixed:
@@ -397,6 +408,7 @@ async def _synthesize_voice(context, message, user, biz_id, topic_id):
                 business_connection_id=biz_id,
                 direct_messages_topic_id=topic_id,
                 reply_markup=tts_keyboard(),
+                reply_parameters=quote,
             )
             TTS.cache_set(cache_key, msg.voice.file_id)
     except Exception as e:
@@ -407,6 +419,7 @@ async def _synthesize_voice(context, message, user, biz_id, topic_id):
             business_connection_id=biz_id,
             direct_messages_topic_id=topic_id,
             reply_markup=main_menu_keyboard(),
+            reply_parameters=quote,
         )
 
 
