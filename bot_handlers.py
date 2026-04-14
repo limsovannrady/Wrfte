@@ -106,7 +106,7 @@ _load_prefs()
 def main_menu_keyboard():
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("📝 បង្កើត QR", callback_data="action_generate"),
+            InlineKeyboardButton("📋 បង្កើត QR", callback_data="action_generate"),
             InlineKeyboardButton("📷 ស្កេន QR Code", callback_data="action_scan"),
         ],
         [
