@@ -11,6 +11,7 @@ from telegram.ext import (
 )
 
 TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+BUSINESS_OWNER_USER_IDS = {}
 
 
 logging.basicConfig(
@@ -25,6 +26,44 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 def direct_messages_topic_id(message):
     topic = getattr(message, "direct_messages_topic", None)
     return getattr(topic, "topic_id", None)
+
+
+async def get_business_owner_user_id(business_connection_id, context: ContextTypes.DEFAULT_TYPE):
+    if not business_connection_id:
+        return None
+
+    if business_connection_id not in BUSINESS_OWNER_USER_IDS:
+        connection = await context.bot.get_business_connection(business_connection_id)
+        BUSINESS_OWNER_USER_IDS[business_connection_id] = connection.user.id
+
+    return BUSINESS_OWNER_USER_IDS[business_connection_id]
+
+
+async def is_business_owner_message(message, context: ContextTypes.DEFAULT_TYPE):
+    business_connection_id = getattr(message, "business_connection_id", None)
+    sender = getattr(message, "from_user", None)
+    if not business_connection_id or not sender:
+        return False
+
+    if getattr(sender, "is_bot", False):
+        logger.info("Skipping business message from a bot sender user_id=%s", sender.id)
+        return True
+
+    try:
+        owner_user_id = await get_business_owner_user_id(business_connection_id, context)
+    except Exception:
+        logger.exception("Could not check business connection owner")
+        return False
+
+    if sender.id == owner_user_id:
+        logger.info(
+            "Skipping business owner message user_id=%s business_connection_id=%s",
+            sender.id,
+            business_connection_id,
+        )
+        return True
+
+    return False
 
 
 async def log_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -46,9 +85,10 @@ async def log_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = update.message
 
     logger.info(
-        "Received update type=%s chat_id=%s business_connection_id=%s direct_topic_id=%s",
+        "Received update type=%s chat_id=%s from_user_id=%s business_connection_id=%s direct_topic_id=%s",
         update_type,
         getattr(message, "chat_id", None),
+        getattr(getattr(message, "from_user", None), "id", None),
         getattr(message, "business_connection_id", None),
         direct_messages_topic_id(message) if message else None,
     )
@@ -61,6 +101,9 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     if not message:
+        return
+
+    if await is_business_owner_message(message, context):
         return
 
     await context.bot.send_chat_action(message.chat_id, constants.ChatAction.TYPING)
@@ -78,11 +121,13 @@ async def business_connection(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
 
     logger.info(
-        "Business connection %s for user_chat_id=%s enabled=%s",
+        "Business connection %s for user_id=%s user_chat_id=%s enabled=%s",
         connection.id,
+        connection.user.id,
         connection.user_chat_id,
         connection.is_enabled,
     )
+    BUSINESS_OWNER_USER_IDS[connection.id] = connection.user.id
 
     if connection.is_enabled:
         logger.info("Business connection is enabled and ready to receive customer messages")
@@ -95,6 +140,9 @@ async def business_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = message.text or message.caption or ""
     topic_id = direct_messages_topic_id(message)
+
+    if await is_business_owner_message(message, context):
+        return
 
     await context.bot.send_chat_action(
         chat_id=message.chat_id,
