@@ -305,7 +305,6 @@ async def _generate_qr(context, message, user, biz_id, topic_id, reply_to_msg_id
         await context.bot.send_photo(
             chat_id=message.chat_id,
             photo=f,
-
             business_connection_id=biz_id,
             direct_messages_topic_id=topic_id,
             reply_markup=main_menu_keyboard(),
@@ -342,6 +341,7 @@ async def _scan_qr(context, message, user, biz_id, topic_id, reply_to_msg_id=Non
                 parse_mode="HTML",
                 business_connection_id=biz_id,
                 direct_messages_topic_id=topic_id,
+                reply_markup=main_menu_keyboard(),
                 reply_parameters=quote,
             )
         else:
