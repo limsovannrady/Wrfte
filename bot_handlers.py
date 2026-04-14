@@ -341,11 +341,10 @@ async def _scan_qr(context, message, user, biz_id, topic_id, reply_to_msg_id=Non
             log_activity(user, "ស្កេន QR Code", data[:80])
             await context.bot.send_message(
                 chat_id=message.chat_id,
-                text=f"✅ លទ្ធផល:\n<code>{data}</code>",
+                text=f"<code>{data}</code>",
                 parse_mode="HTML",
                 business_connection_id=biz_id,
                 direct_messages_topic_id=topic_id,
-                reply_markup=main_menu_keyboard(),
                 reply_parameters=quote,
             )
         else:
