@@ -1,33 +1,39 @@
-# Telegram Business Bot
+# QR Code Telegram Bot
 
 ## Overview
 
-This project is a Python Telegram bot using `python-telegram-bot`. It runs with long polling and reads the bot token from the `TELEGRAM_BOT_TOKEN` environment variable.
+Python Telegram bot that generates and scans QR codes. Includes a web dashboard for monitoring activity.
 
 ## Stack
 
 - Python 3.11+
-- `python-telegram-bot`
-- Replit workflow: `Telegram Bot`
+- `python-telegram-bot` — Telegram Bot API
+- `qrcode` + `pillow` — QR code generation
+- `zxing-cpp` — QR code scanning/decoding
+- SQLite — activity and user logging
+- Built-in HTTP server — admin dashboard on port 5000
 
 ## Files
 
-- `bot.py` — bot entry point, handlers, and polling setup
+- `main.py` — entry point: starts bot (long polling) + dashboard (background thread)
+- `bot_handlers.py` — /start, generate QR, decode QR handlers
+- `db.py` — SQLite database: users and activity logging
+- `dashboard.py` — HTTP server for admin dashboard API
+- `templates/index.html` — dashboard frontend (Telegram Web App auth)
 - `pyproject.toml` — Python package metadata and dependencies
-- `uv.lock` — locked dependency versions
 
 ## Bot behavior
 
-- `/start` replies with a Khmer greeting in normal Telegram chats.
-- Telegram Business connection updates are logged and acknowledged when enabled.
-- Telegram Business chat messages are handled via `business_message` and `edited_business_message` updates.
-- Business replies include the message's `business_connection_id`, which is required for sending through a Telegram Business connection.
-- Customer text messages receive `សួស្តីបង {last name}` using the Telegram sender's last name.
-- Business direct-message topics are preserved with `direct_messages_topic_id` when Telegram provides one.
-- Messages sent directly by the Telegram Business owner, or by bot senders, are ignored so the bot does not auto-reply after a human owner response.
-- Incoming update types are logged to help diagnose Telegram Business and third-party connection issues.
-- Polling uses `Update.ALL_TYPES` so Telegram Business updates are received.
+- `/start` — greeting with instructions in Khmer
+- Send any text or link → bot generates and returns a QR code image
+- Send a photo of a QR code → bot scans and returns the decoded text
 
-## Setup notes
+## Dashboard
 
-The bot requires a valid `TELEGRAM_BOT_TOKEN` secret. To use it in Telegram Business, the bot must also be enabled for Business use in Telegram/BotFather and connected from the Telegram Business account settings.
+- Runs on port 5000 (preview pane)
+- Protected by Telegram Web App authentication (admin only)
+- Shows total users, total actions, user list, and recent activity log
+
+## Setup
+
+Requires `TELEGRAM_BOT_TOKEN` secret in Replit Secrets.

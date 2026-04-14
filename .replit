@@ -35,7 +35,8 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python3 bot.py"
+args = "python3 main.py"
+waitForPort = 5000
 
 [agent]
 stack = "PNPM_WORKSPACE"
@@ -47,3 +48,4 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+packages = ["freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "tcl", "tk", "zlib"]

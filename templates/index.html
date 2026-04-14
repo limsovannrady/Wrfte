@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Bot Dashboard</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+    .gate {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh; padding: 32px; text-align: center;
+    }
+    .gate .icon { font-size: 56px; margin-bottom: 20px; }
+    .gate h2 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    .gate p  { font-size: 14px; color: #64748b; line-height: 1.6; }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #2d3148; border-top-color: #60a5fa;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #dashboard { display: none; }
+
+    header {
+      background: #1a1d27; border-bottom: 1px solid #2d3148;
+      padding: 18px 28px; display: flex; align-items: center; gap: 12px;
+    }
+    header .logo {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    header h1 { font-size: 20px; font-weight: 700; }
+    .status-dot {
+      width: 9px; height: 9px; background: #22c55e; border-radius: 50%;
+      margin-left: auto; box-shadow: 0 0 8px #22c55e; animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .status-label { font-size: 13px; color: #22c55e; margin-left: 6px; }
+
+    main { padding: 28px; max-width: 1200px; margin: 0 auto; }
+    .cards {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px; margin-bottom: 28px;
+    }
+    .card {
+      background: #1a1d27; border: 1px solid #2d3148;
+      border-radius: 14px; padding: 22px;
+    }
+    .card .label { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+    .card .value { font-size: 36px; font-weight: 700; color: #f1f5f9; }
+    .card .sub   { font-size: 12px; color: #475569; margin-top: 4px; }
+    .card.blue   .value { color: #60a5fa; }
+    .card.purple .value { color: #a78bfa; }
+    .card.green  .value { color: #4ade80; }
+
+    .panels { display: grid; grid-template-columns: 1fr 1.6fr; gap: 20px; }
+    @media (max-width: 800px) { .panels { grid-template-columns: 1fr; } }
+
+    .panel { background: #1a1d27; border: 1px solid #2d3148; border-radius: 14px; overflow: hidden; }
+    .panel-header {
+      padding: 16px 20px; border-bottom: 1px solid #2d3148;
+      font-size: 14px; font-weight: 600; color: #94a3b8;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; font-size: 11px; color: #475569;
+      text-transform: uppercase; letter-spacing: .05em;
+      padding: 10px 20px; border-bottom: 1px solid #2d3148;
+    }
+    td {
+      padding: 11px 20px; font-size: 13px;
+      border-bottom: 1px solid #1e2235; vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #1e2235; }
+
+    .username { color: #60a5fa; font-weight: 500; }
+    .name-col { color: #cbd5e1; }
+    .action-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .badge-start { background: #1e3a5f; color: #60a5fa; }
+    .badge-gen   { background: #1a3a2a; color: #4ade80; }
+    .badge-scan  { background: #2d1f4a; color: #a78bfa; }
+
+    .detail { color: #475569; font-size: 12px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .time   { color: #475569; font-size: 12px; white-space: nowrap; }
+    .empty  { padding: 40px; text-align: center; color: #374151; font-size: 14px; }
+    .refresh-info { text-align: right; font-size: 12px; color: #334155; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="gate" id="screen-loading">
+  <div class="spinner"></div>
+  <h2>កំពុងផ្ទុក...</h2>
+  <p>សូមរង់ចាំ</p>
+</div>
+
+<div class="gate" id="screen-denied" style="display:none">
+  <div class="icon">⛔</div>
+  <h2>គ្មានសិទ្ធិចូល</h2>
+  <p>តែ Admin ប៉ុណ្ណោះអាចចូលបាន។</p>
+</div>
+
+<div id="dashboard">
+  <header>
+    <div class="logo">🤖</div>
+    <div><h1>QR Bot Dashboard</h1></div>
+    <div class="status-dot"></div>
+    <span class="status-label">Online</span>
+  </header>
+  <main>
+    <div class="refresh-info" id="refresh-info">កំពុងផ្ទុក...</div>
+    <div class="cards">
+      <div class="card blue">
+        <div class="label">👥 អ្នកប្រើប្រាស់សរុប</div>
+        <div class="value" id="total-users">—</div>
+        <div class="sub">Unique users</div>
+      </div>
+      <div class="card green">
+        <div class="label">⚡ សកម្មភាពសរុប</div>
+        <div class="value" id="total-actions">—</div>
+        <div class="sub">Total interactions</div>
+      </div>
+      <div class="card purple">
+        <div class="label">🕐 បច្ចុប្បន្ន</div>
+        <div class="value" id="clock">—</div>
+        <div class="sub">Live time</div>
+      </div>
+    </div>
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-header">👤 អ្នកប្រើប្រាស់</div>
+        <table>
+          <thead><tr><th>Username</th><th>ឈ្មោះ</th><th>ចូលចុងក្រោយ</th></tr></thead>
+          <tbody id="users-body"><tr><td colspan="3" class="empty">កំពុងផ្ទុក...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-header">📋 សកម្មភាពចុងក្រោយ</div>
+        <table>
+          <thead><tr><th>Username</th><th>សកម្មភាព</th><th>ព័ត៌មាន</th><th>ពេលវេលា</th></tr></thead>
+          <tbody id="activity-body"><tr><td colspan="4" class="empty">កំពុងផ្ទុក...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const ADMIN_ID = 5002402843;
+
+  function show(id) {
+    ["screen-loading","screen-denied","dashboard"].forEach(s => {
+      const el = document.getElementById(s);
+      el.style.display = s === id ? (s === "dashboard" ? "block" : "flex") : "none";
+    });
+  }
+
+  async function init() {
+    const tg = window.Telegram?.WebApp;
+
+    if (tg && tg.initData) {
+      tg.ready();
+      tg.expand();
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData: tg.initData })
+      });
+      if (!res.ok) {
+        show("screen-denied");
+        return;
+      }
+    }
+
+    show("dashboard");
+    await refresh();
+    setInterval(refresh, 10000);
+    setInterval(updateClock, 1000);
+    updateClock();
+  }
+
+  function badgeClass(a) {
+    if (a.includes("បើក")) return "badge-start";
+    if (a.includes("បង្កើត")) return "badge-gen";
+    return "badge-scan";
+  }
+
+  function fmt(ts) { return ts ? ts.slice(0,16) : "—"; }
+
+  async function fetchStats() {
+    const r = await fetch("/api/stats");
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById("total-users").textContent = d.total_users;
+    document.getElementById("total-actions").textContent = d.total_actions;
+  }
+
+  async function fetchUsers() {
+    const r = await fetch("/api/users");
+    if (!r.ok) return;
+    const users = await r.json();
+    const tb = document.getElementById("users-body");
+    tb.innerHTML = users.length ? users.map(u => {
+      const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "—";
+      const uname = u.username ? `@${u.username}` : `<span style="color:#94a3b8">${name}</span>`;
+      return `<tr>
+        <td class="username">${uname}</td>
+        <td class="name-col">${name}</td>
+        <td class="time">${fmt(u.last_seen)}</td>
+      </tr>`;
+    }).join("") : '<tr><td colspan="3" class="empty">មិនទាន់មានទិន្នន័យ</td></tr>';
+  }
+
+  async function fetchActivities() {
+    const r = await fetch("/api/activities");
+    if (!r.ok) return;
+    const acts = await r.json();
+    const tb = document.getElementById("activity-body");
+    tb.innerHTML = acts.length ? acts.map(a => {
+      const display = a.username ? `@${a.username}` : `<span style="color:#94a3b8">${a.full_name||"—"}</span>`;
+      return `<tr>
+        <td class="username">${display}</td>
+        <td><span class="action-badge ${badgeClass(a.action)}">${a.action}</span></td>
+        <td class="detail" title="${a.detail||''}">${a.detail||"—"}</td>
+        <td class="time">${fmt(a.timestamp)}</td>
+      </tr>`;
+    }).join("") : '<tr><td colspan="4" class="empty">មិនទាន់មានទិន្នន័យ</td></tr>';
+  }
+
+  function updateClock() {
+    const n = new Date(), p = x => String(x).padStart(2,"0");
+    document.getElementById("clock").textContent = `${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
+  }
+
+  async function refresh() {
+    await Promise.all([fetchStats(), fetchUsers(), fetchActivities()]);
+    document.getElementById("refresh-info").textContent =
+      `ធ្វើបច្ចុប្បន្នភាព: ${new Date().toLocaleTimeString()} · auto-refresh រៀង 10 វិ`;
+  }
+
+  init();
+</script>
+</body>
+</html>
