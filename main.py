@@ -3,6 +3,7 @@ import logging
 import threading
 from http.server import HTTPServer
 
+from telegram import BotCommand
 from telegram.ext import ApplicationBuilder
 
 from db import init_db
@@ -26,6 +27,13 @@ def run_dashboard():
     server.serve_forever()
 
 
+async def post_init(application):
+    await application.bot.set_my_commands([
+        BotCommand("start", "📋 បើកម៉ឺនុយចម្បង"),
+        BotCommand("language", "🌐 ជ្រើសរើសភាសាបកប្រែ"),
+    ])
+
+
 def main():
     init_db()
 
@@ -33,7 +41,7 @@ def main():
     dashboard_thread.start()
 
     print("Starting Telegram bot with long polling...")
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
     register_handlers(app)
     app.run_polling(allowed_updates=[
         "message",
