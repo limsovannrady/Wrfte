@@ -114,14 +114,11 @@ async def send_menu(context: ContextTypes.DEFAULT_TYPE, chat_id, user, biz_id=No
     first_name = getattr(user, "first_name", "") or ""
     name = last_name or first_name or "បង"
     text = (
-        f"👋 សួស្តី {name}!\n\n"
-        "<b>ខ្ញុំជា QR &amp; Voice Bot</b>\n\n"
-        "<blockquote>"
+        "👋 សួស្តីបង Jalaka\n\n"
         "👉 សូមជ្រើសរើសមុខងារ:\n"
         "📝 បង្កើត QR Code — ផ្ញើ Text ឬ Link\n"
         "📷 ស្កេន QR Code — ផ្ញើរូបភាព QR\n"
         "🔊 Text to Voice — ផ្ញើ Text ហើយស្ដាប់សំឡេង"
-        "</blockquote>"
     )
     await context.bot.send_message(
         chat_id=chat_id,
