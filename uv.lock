@@ -858,7 +858,7 @@ requires-dist = [
     { name = "imageio-ffmpeg" },
     { name = "langdetect" },
     { name = "pillow", specifier = ">=12.1.1" },
-    { name = "python-telegram-bot", specifier = ">=22.7" },
+    { name = "python-telegram-bot", extras = ["httpx"], specifier = ">=22.7" },
     { name = "qrcode", specifier = ">=8.2" },
     { name = "telegram", specifier = ">=0.0.1" },
     { name = "zxing-cpp", specifier = ">=2.3.0" },

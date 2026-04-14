@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "QR Code & Text-to-Voice Telegram Bot"
 requires-python = ">=3.11"
 dependencies = [
-    "python-telegram-bot>=22.7",
+    "python-telegram-bot[httpx]>=22.7",
     "qrcode>=8.2",
     "pillow>=12.1.1",
     "zxing-cpp>=2.3.0",
