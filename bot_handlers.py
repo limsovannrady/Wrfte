@@ -26,8 +26,13 @@ except ImportError:
 logger = logging.getLogger(__name__)
 BUSINESS_OWNER_USER_IDS = {}
 
-# ── Primary emoji ───────────────────────────────────────────────────────────────
-PRIMARY_EMOJI = "📋"
+# ── Emoji constants ─────────────────────────────────────────────────────────────
+EMOJI_GREETING   = "👋"
+EMOJI_QR_CREATE  = "📋"
+EMOJI_QR_SCAN    = "📷"
+EMOJI_TTS        = "🔊"
+EMOJI_TRANSLATE  = "🌐"
+PRIMARY_EMOJI    = EMOJI_QR_CREATE
 
 # ── Translation languages ───────────────────────────────────────────────────────
 LANGUAGES = {
@@ -109,12 +114,12 @@ _load_prefs()
 def main_menu_keyboard():
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("📋 បង្កើត QR", callback_data="action_generate"),
-            InlineKeyboardButton("📷 ស្កេន QR Code", callback_data="action_scan"),
+            InlineKeyboardButton(f"{EMOJI_QR_CREATE} បង្កើត QR", callback_data="action_generate"),
+            InlineKeyboardButton(f"{EMOJI_QR_SCAN} ស្កេន QR Code", callback_data="action_scan"),
         ],
         [
-            InlineKeyboardButton("🔊 Text to Voice", callback_data="action_tts"),
-            InlineKeyboardButton("🌐 បកប្រែ", callback_data="action_translate"),
+            InlineKeyboardButton(f"{EMOJI_TTS} Text to Voice", callback_data="action_tts"),
+            InlineKeyboardButton(f"{EMOJI_TRANSLATE} បកប្រែ", callback_data="action_translate"),
         ],
     ])
 
@@ -177,7 +182,7 @@ async def send_menu(context: ContextTypes.DEFAULT_TYPE, chat_id, user, biz_id=No
     last_name = getattr(user, "last_name", "") or ""
     first_name = getattr(user, "first_name", "") or ""
     name = last_name or first_name or "បង"
-    text = "👋 សួស្តីបង Jalaka"
+    text = f"{EMOJI_GREETING} សួស្តីបង Jalaka"
     await context.bot.send_message(
         chat_id=chat_id,
         text=text,
@@ -279,7 +284,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["state"] = "awaiting_text"
         await context.bot.send_message(
             chat_id=chat_id,
-            text=f'<b>{PRIMARY_EMOJI} បង្កើត QR</b>\n\n'
+            text=f"<b>{EMOJI_QR_CREATE} បង្កើត QR</b>\n\n"
                  "សូមផ្ញើ <b>Text</b> ឬ <b>Link</b> ដែលអ្នកចង់ធ្វើ QR Code:",
             parse_mode="HTML",
             business_connection_id=biz_id,
@@ -291,7 +296,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["state"] = "awaiting_photo"
         await context.bot.send_message(
             chat_id=chat_id,
-            text="📷 <b>ស្កេន QR Code</b>\n\n"
+            text=f"<b>{EMOJI_QR_SCAN} ស្កេន QR Code</b>\n\n"
                  "សូមផ្ញើ <b>រូបភាព QR Code</b> ដែលអ្នកចង់ស្កេន:",
             parse_mode="HTML",
             business_connection_id=biz_id,
@@ -305,7 +310,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         current = "👩 សំឡេងស្រី" if gender == "female" else "👨 សំឡេងប្រុស"
         await context.bot.send_message(
             chat_id=chat_id,
-            text=f"🔊 <b>Text to Voice</b>\n\n"
+            text=f"<b>{EMOJI_TTS} Text to Voice</b>\n\n"
                  f"សំឡេងបច្ចុប្បន្ន: <b>{current}</b>\n\n"
                  "សូមផ្ញើ <b>Text</b> ណាមួយ ហើយខ្ញុំនឹងបំប្លែងជាសំឡេង\n"
                  "<i>(គាំទ្រ ខ្មែរ, English, Thai, 日本語 និងភាសាជាច្រើនទៀត)</i>",
@@ -319,7 +324,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         set_gender(user.id, "male")
         context.user_data["state"] = "awaiting_tts"
         await query.edit_message_text(
-            "🔊 <b>Text to Voice</b>\n\n"
+            f"<b>{EMOJI_TTS} Text to Voice</b>\n\n"
             "សំឡេងបច្ចុប្បន្ន: <b>👨 សំឡេងប្រុស</b>\n\n"
             "សូមផ្ញើ <b>Text</b> ណាមួយ ហើយខ្ញុំនឹងបំប្លែងជាសំឡេង\n"
             "<i>(គាំទ្រ ខ្មែរ, English, Thai, 日本語 និងភាសាជាច្រើនទៀត)</i>",
@@ -331,7 +336,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         set_gender(user.id, "female")
         context.user_data["state"] = "awaiting_tts"
         await query.edit_message_text(
-            "🔊 <b>Text to Voice</b>\n\n"
+            f"<b>{EMOJI_TTS} Text to Voice</b>\n\n"
             "សំឡេងបច្ចុប្បន្ន: <b>👩 សំឡេងស្រី</b>\n\n"
             "សូមផ្ញើ <b>Text</b> ណាមួយ ហើយខ្ញុំនឹងបំប្លែងជាសំឡេង\n"
             "<i>(គាំទ្រ ខ្មែរ, English, Thai, 日本語 និងភាសាជាច្រើនទៀត)</i>",
@@ -345,7 +350,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         lang_name = LANGUAGES.get(lang_code, lang_code)
         await context.bot.send_message(
             chat_id=chat_id,
-            text=f"🌐 <b>បកប្រែ</b>\n\n"
+            text=f"<b>{EMOJI_TRANSLATE} បកប្រែ</b>\n\n"
                  f"ភាសាគោលដៅបច្ចុប្បន្ន: <b>{lang_name}</b>\n\n"
                  "សូមជ្រើសរើសភាសាដែលអ្នកចង់បកប្រែទៅ:",
             parse_mode="HTML",
@@ -360,7 +365,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _user_translate_lang[user.id] = lang_code
         context.user_data["state"] = "awaiting_translate"
         await query.edit_message_text(
-            f"🌐 <b>បកប្រែ</b>\n\n"
+            f"<b>{EMOJI_TRANSLATE} បកប្រែ</b>\n\n"
             f"✅ ភាសាគោលដៅ: <b>{lang_name}</b>\n\n"
             "សូមផ្ញើ Text ដែលអ្នកចង់បកប្រែ:",
             parse_mode="HTML",
@@ -524,7 +529,7 @@ async def _translate_text(context, message, user, biz_id, topic_id, reply_to_msg
         translated = GoogleTranslator(source="auto", target=target_lang).translate(text)
         await context.bot.send_message(
             chat_id=message.chat_id,
-            text=f"🌐 <b>បកប្រែទៅ {lang_name}:</b>\n\n{translated}",
+            text=f"<b>{EMOJI_TRANSLATE} បកប្រែទៅ {lang_name}:</b>\n\n{translated}",
             parse_mode="HTML",
             business_connection_id=biz_id,
             direct_messages_topic_id=topic_id,
@@ -553,7 +558,7 @@ async def language_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang_name = LANGUAGES.get(lang_code, lang_code)
     await context.bot.send_chat_action(chat_id=message.chat_id, action=constants.ChatAction.TYPING)
     await message.reply_text(
-        f"🌐 <b>ជ្រើសរើសភាសាបកប្រែ</b>\n\nភាសាបច្ចុប្បន្ន: <b>{lang_name}</b>\n\nសូមជ្រើសរើសភាសាគោលដៅ:",
+        f"<b>{EMOJI_TRANSLATE} ជ្រើសរើសភាសាបកប្រែ</b>\n\nភាសាបច្ចុប្បន្ន: <b>{lang_name}</b>\n\nសូមជ្រើសរើសភាសាគោលដៅ:",
         parse_mode="HTML",
         reply_markup=get_language_keyboard(),
     )
