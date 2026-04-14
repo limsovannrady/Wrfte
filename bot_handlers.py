@@ -3,6 +3,7 @@ import logging
 import os
 import asyncio
 import qrcode
+from deep_translator import GoogleTranslator
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyParameters, Update, constants
 from telegram.ext import (
     Application,
@@ -24,6 +25,52 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 BUSINESS_OWNER_USER_IDS = {}
+
+# ── Translation languages ───────────────────────────────────────────────────────
+LANGUAGES = {
+    "km": "🇰🇭 ខ្មែរ",
+    "en": "🇺🇸 អង់គ្លេស",
+    "zh-CN": "🇨🇳 ចិន",
+    "ja": "🇯🇵 ជប៉ុន",
+    "ko": "🇰🇷 កូរ៉េ",
+    "fr": "🇫🇷 បារាំង",
+    "th": "🇹🇭 ថៃ",
+    "vi": "🇻🇳 វៀតណាម",
+    "de": "🇩🇪 អាល្លឺម៉ង់",
+    "es": "🇪🇸 អេស្ប៉ាញ",
+    "ru": "🇷🇺 រុស្សី",
+    "ar": "🇸🇦 អារ៉ាប់",
+    "pt": "🇵🇹 ព័រទុយហ្គាល់",
+    "it": "🇮🇹 អ៊ីតាលី",
+    "hi": "🇮🇳 ហិណ្ឌូ",
+    "id": "🇮🇩 អ៊ីនដូនេស៊ី",
+    "ms": "🇲🇾 ម៉ាឡេស៊ី",
+    "tl": "🇵🇭 ហ្វីលីពីន",
+    "tr": "🇹🇷 តួគី",
+    "nl": "🇳🇱 ហូឡង់",
+    "pl": "🇵🇱 ប៉ូឡូញ",
+    "uk": "🇺🇦 អ៊ុយក្រែន",
+    "sv": "🇸🇪 ស៊ុយអែត",
+    "da": "🇩🇰 ដាណឺម៉ាក",
+    "fi": "🇫🇮 ហ្វាំងឡង់",
+    "no": "🇳🇴 នន័រវែស",
+    "cs": "🇨🇿 ឆែក",
+    "ro": "🇷🇴 រូម៉ានី",
+    "hu": "🇭🇺 ហុងគ្រី",
+    "el": "🇬🇷 ក្រិច",
+    "he": "🇮🇱 អ៊ីស្រាអែល",
+    "fa": "🇮🇷 ហ្វ័រស៊ី",
+    "bn": "🇧🇩 បង់ក្លាដែស",
+    "ur": "🇵🇰 អ៊ូតូ",
+    "sw": "🇰🇪 ស្វាហ៊ីលី",
+    "my": "🇲🇲 មីយ៉ាន់ម៉ា",
+    "lo": "🇱🇦 ឡាវ",
+    "mn": "🇲🇳 ម៉ុងហ្គោល",
+    "si": "🇱🇰 ស្រីលង្កា",
+    "ne": "🇳🇵 នេប៉ាល់",
+}
+
+_user_translate_lang: dict = {}
 
 # ── Voice gender preference ────────────────────────────────────────────────────
 _PREFS_FILE = os.path.join(os.path.dirname(__file__), "user_prefs.json")
@@ -64,8 +111,22 @@ def main_menu_keyboard():
         ],
         [
             InlineKeyboardButton("🔊 Text to Voice", callback_data="action_tts"),
+            InlineKeyboardButton("🌐 បកប្រែ", callback_data="action_translate"),
         ],
     ])
+
+def get_language_keyboard():
+    buttons = []
+    row = []
+    for code, name in LANGUAGES.items():
+        row.append(InlineKeyboardButton(name, callback_data=f"lang_{code}"))
+        if len(row) == 2:
+            buttons.append(row)
+            row = []
+    if row:
+        buttons.append(row)
+    buttons.append([InlineKeyboardButton("🔙 ត្រឡប់ក្រោយ", callback_data="action_back")])
+    return InlineKeyboardMarkup(buttons)
 
 def back_keyboard():
     return InlineKeyboardMarkup([
@@ -118,7 +179,8 @@ async def send_menu(context: ContextTypes.DEFAULT_TYPE, chat_id, user, biz_id=No
         "👉 សូមជ្រើសរើសមុខងារ:\n"
         "📝 បង្កើត QR Code — ផ្ញើ Text ឬ Link\n"
         "📷 ស្កេន QR Code — ផ្ញើរូបភាព QR\n"
-        "🔊 Text to Voice — ផ្ញើ Text ហើយស្ដាប់សំឡេង"
+        "🔊 Text to Voice — ផ្ញើ Text ហើយស្ដាប់សំឡេង\n"
+        "🌐 បកប្រែ — បកប្រែ Text ទៅ 40+ ភាសា"
     )
     await context.bot.send_message(
         chat_id=chat_id,
@@ -198,6 +260,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await _synthesize_voice(context, message, user, biz_id, topic_id, msg_id)
         return
 
+    if state == "awaiting_translate" and message.text:
+        await _translate_text(context, message, user, biz_id, topic_id, msg_id)
+        return
+
     log_activity(user, "ទទួល Message", (message.text or "")[:80])
     await send_menu(context, message.chat_id, user, biz_id, topic_id, reply_to_msg_id=msg_id)
 
@@ -275,6 +341,34 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "<i>(គាំទ្រ ខ្មែរ, English, Thai, 日本語 និងភាសាជាច្រើនទៀត)</i>",
             parse_mode="HTML",
             reply_markup=tts_keyboard(),
+        )
+
+    elif data == "action_translate":
+        log_activity(user, "ជ្រើស បកប្រែ", "")
+        lang_code = _user_translate_lang.get(user.id, "en")
+        lang_name = LANGUAGES.get(lang_code, lang_code)
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=f"🌐 <b>បកប្រែ</b>\n\n"
+                 f"ភាសាគោលដៅបច្ចុប្បន្ន: <b>{lang_name}</b>\n\n"
+                 "សូមជ្រើសរើសភាសាដែលអ្នកចង់បកប្រែទៅ:",
+            parse_mode="HTML",
+            reply_markup=get_language_keyboard(),
+            business_connection_id=biz_id,
+            direct_messages_topic_id=topic_id,
+        )
+
+    elif data.startswith("lang_"):
+        lang_code = data.replace("lang_", "")
+        lang_name = LANGUAGES.get(lang_code, lang_code)
+        _user_translate_lang[user.id] = lang_code
+        context.user_data["state"] = "awaiting_translate"
+        await query.edit_message_text(
+            f"🌐 <b>បកប្រែ</b>\n\n"
+            f"✅ ភាសាគោលដៅ: <b>{lang_name}</b>\n\n"
+            "សូមផ្ញើ Text ដែលអ្នកចង់បកប្រែ:",
+            parse_mode="HTML",
+            reply_markup=back_keyboard(),
         )
 
     elif data == "action_back":
@@ -419,6 +513,56 @@ async def _synthesize_voice(context, message, user, biz_id, topic_id, reply_to_m
         )
 
 
+# ── Translation ─────────────────────────────────────────────────────────────────
+async def _translate_text(context, message, user, biz_id, topic_id, reply_to_msg_id=None):
+    text = message.text
+    log_activity(user, "បកប្រែ", text[:80])
+    quote = ReplyParameters(message_id=reply_to_msg_id) if reply_to_msg_id else None
+    target_lang = _user_translate_lang.get(user.id, "en")
+    lang_name = LANGUAGES.get(target_lang, target_lang)
+    translate_again_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔄 ប្តូរភាសា", callback_data="action_translate")],
+        [InlineKeyboardButton("🔙 ត្រឡប់ក្រោយ", callback_data="action_back")],
+    ])
+    try:
+        translated = GoogleTranslator(source="auto", target=target_lang).translate(text)
+        await context.bot.send_message(
+            chat_id=message.chat_id,
+            text=f"🌐 <b>បកប្រែទៅ {lang_name}:</b>\n\n{translated}",
+            parse_mode="HTML",
+            business_connection_id=biz_id,
+            direct_messages_topic_id=topic_id,
+            reply_markup=translate_again_keyboard,
+            reply_parameters=quote,
+        )
+    except Exception as e:
+        logger.error("Translation error: %s", e)
+        await context.bot.send_message(
+            chat_id=message.chat_id,
+            text="❌ សូមទោស មានបញ្ហាក្នុងការបកប្រែ។ សូមព្យាយាមម្តងទៀត។",
+            business_connection_id=biz_id,
+            direct_messages_topic_id=topic_id,
+            reply_markup=main_menu_keyboard(),
+            reply_parameters=quote,
+        )
+
+
+async def language_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.effective_message
+    if not message:
+        return
+    user = update.effective_user
+    log_activity(user, "ជ្រើស ភាសាបកប្រែ", "/language")
+    lang_code = _user_translate_lang.get(user.id, "en")
+    lang_name = LANGUAGES.get(lang_code, lang_code)
+    await context.bot.send_chat_action(chat_id=message.chat_id, action=constants.ChatAction.TYPING)
+    await message.reply_text(
+        f"🌐 <b>ជ្រើសរើសភាសាបកប្រែ</b>\n\nភាសាបច្ចុប្បន្ន: <b>{lang_name}</b>\n\nសូមជ្រើសរើសភាសាគោលដៅ:",
+        parse_mode="HTML",
+        reply_markup=get_language_keyboard(),
+    )
+
+
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     logger.exception("Handler error", exc_info=context.error)
 
@@ -426,6 +570,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
 def register_handlers(app: Application):
     app.add_handler(BusinessConnectionHandler(business_connection_handler))
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_callback, pattern="^(action_|tts_)"))
+    app.add_handler(CommandHandler("language", language_command))
+    app.add_handler(CallbackQueryHandler(button_callback, pattern="^(action_|tts_|lang_)"))
     app.add_handler(TypeHandler(Update, handle_message), group=1)
     app.add_error_handler(error_handler)
