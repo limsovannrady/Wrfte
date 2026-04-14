@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 BUSINESS_OWNER_USER_IDS = {}
 
 # ── Primary emoji ───────────────────────────────────────────────────────────────
-PRIMARY_EMOJI = '<tg-emoji emoji-id="4954458300235121703">📋</tg-emoji>'
+PRIMARY_EMOJI = "📋"
 
 # ── Translation languages ───────────────────────────────────────────────────────
 LANGUAGES = {
@@ -177,7 +177,7 @@ async def send_menu(context: ContextTypes.DEFAULT_TYPE, chat_id, user, biz_id=No
     last_name = getattr(user, "last_name", "") or ""
     first_name = getattr(user, "first_name", "") or ""
     name = last_name or first_name or "បង"
-    text = '<tg-emoji emoji-id="5472055112702629499">👋</tg-emoji> សួស្តីបង Jalaka'
+    text = "👋 សួស្តីបង Jalaka"
     await context.bot.send_message(
         chat_id=chat_id,
         text=text,
@@ -279,7 +279,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["state"] = "awaiting_text"
         await context.bot.send_message(
             chat_id=chat_id,
-            text=f'{PRIMARY_EMOJI} <b>បង្កើត QR</b>\n\n'
+            text=f'<b>{PRIMARY_EMOJI} បង្កើត QR</b>\n\n'
                  "សូមផ្ញើ <b>Text</b> ឬ <b>Link</b> ដែលអ្នកចង់ធ្វើ QR Code:",
             parse_mode="HTML",
             business_connection_id=biz_id,
