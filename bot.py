@@ -85,14 +85,7 @@ async def business_connection(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
 
     if connection.is_enabled:
-        try:
-            await context.bot.send_message(
-                chat_id=connection.user_chat_id,
-                text="Bot connected to your Telegram Business account.",
-                business_connection_id=connection.id,
-            )
-        except Exception:
-            logger.exception("Could not send business connection confirmation")
+        logger.info("Business connection is enabled and ready to receive customer messages")
 
 
 async def business_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -107,7 +100,6 @@ async def business_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id=message.chat_id,
         action=constants.ChatAction.TYPING,
         business_connection_id=message.business_connection_id,
-        direct_messages_topic_id=topic_id,
     )
 
     if text.startswith("/start"):
