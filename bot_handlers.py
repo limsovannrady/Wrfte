@@ -301,7 +301,7 @@ async def _generate_qr(context, message, user, biz_id, topic_id, reply_to_msg_id
         await context.bot.send_photo(
             chat_id=message.chat_id,
             photo=f,
-            caption="✅ QR Code របស់អ្នក",
+
             business_connection_id=biz_id,
             direct_messages_topic_id=topic_id,
             reply_markup=main_menu_keyboard(),
