@@ -211,25 +211,40 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     user = query.from_user
     data = query.data
+    chat_id = query.message.chat_id
+    biz_id = getattr(query.message, "business_connection_id", None)
+    topic_id = getattr(query.message, "direct_messages_topic_id", None)
+
+    # Remove buttons from the old menu message so it stays clean
+    try:
+        await query.edit_message_reply_markup(reply_markup=None)
+    except Exception:
+        pass
 
     if data == "action_generate":
         log_activity(user, "ជ្រើស បង្កើត QR", "")
         context.user_data["state"] = "awaiting_text"
-        await query.edit_message_text(
-            "📝 <b>បង្កើត QR Code</b>\n\n"
-            "សូមផ្ញើ <b>Text</b> ឬ <b>Link</b> ដែលអ្នកចង់ធ្វើ QR Code:",
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="📝 <b>បង្កើត QR Code</b>\n\n"
+                 "សូមផ្ញើ <b>Text</b> ឬ <b>Link</b> ដែលអ្នកចង់ធ្វើ QR Code:",
             parse_mode="HTML",
             reply_markup=back_keyboard(),
+            business_connection_id=biz_id,
+            direct_messages_topic_id=topic_id,
         )
 
     elif data == "action_scan":
         log_activity(user, "ជ្រើស ស្កេន QR", "")
         context.user_data["state"] = "awaiting_photo"
-        await query.edit_message_text(
-            "📷 <b>ស្កេន QR Code</b>\n\n"
-            "សូមផ្ញើ <b>រូបភាព QR Code</b> ដែលអ្នកចង់ស្កេន:",
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="📷 <b>ស្កេន QR Code</b>\n\n"
+                 "សូមផ្ញើ <b>រូបភាព QR Code</b> ដែលអ្នកចង់ស្កេន:",
             parse_mode="HTML",
             reply_markup=back_keyboard(),
+            business_connection_id=biz_id,
+            direct_messages_topic_id=topic_id,
         )
 
     elif data == "action_tts":
@@ -237,52 +252,49 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["state"] = "awaiting_tts"
         gender = get_gender(user.id)
         current = "👩 សំឡេងស្រី" if gender == "female" else "👨 សំឡេងប្រុស"
-        await query.edit_message_text(
-            f"🔊 <b>Text to Voice</b>\n\n"
-            f"សំឡេងបច្ចុប្បន្ន: <b>{current}</b>\n\n"
-            "សូមផ្ញើ <b>Text</b> ណាមួយ ហើយខ្ញុំនឹងបំប្លែងជាសំឡេង\n"
-            "<i>(គាំទ្រ ខ្មែរ, English, Thai, 日本語 និងភាសាជាច្រើនទៀត)</i>",
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=f"🔊 <b>Text to Voice</b>\n\n"
+                 f"សំឡេងបច្ចុប្បន្ន: <b>{current}</b>\n\n"
+                 "សូមផ្ញើ <b>Text</b> ណាមួយ ហើយខ្ញុំនឹងបំប្លែងជាសំឡេង\n"
+                 "<i>(គាំទ្រ ខ្មែរ, English, Thai, 日本語 និងភាសាជាច្រើនទៀត)</i>",
             parse_mode="HTML",
             reply_markup=tts_keyboard(),
+            business_connection_id=biz_id,
+            direct_messages_topic_id=topic_id,
         )
 
     elif data == "tts_male":
         set_gender(user.id, "male")
         context.user_data["state"] = "awaiting_tts"
-        await query.edit_message_text(
-            "🔊 <b>Text to Voice</b>\n\n"
-            "សំឡេងបច្ចុប្បន្ន: <b>👨 សំឡេងប្រុស</b>\n\n"
-            "សូមផ្ញើ <b>Text</b> ណាមួយ:",
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="🔊 <b>Text to Voice</b>\n\n"
+                 "សំឡេងបច្ចុប្បន្ន: <b>👨 សំឡេងប្រុស</b>\n\n"
+                 "សូមផ្ញើ <b>Text</b> ណាមួយ:",
             parse_mode="HTML",
             reply_markup=tts_keyboard(),
+            business_connection_id=biz_id,
+            direct_messages_topic_id=topic_id,
         )
 
     elif data == "tts_female":
         set_gender(user.id, "female")
         context.user_data["state"] = "awaiting_tts"
-        await query.edit_message_text(
-            "🔊 <b>Text to Voice</b>\n\n"
-            "សំឡេងបច្ចុប្បន្ន: <b>👩 សំឡេងស្រី</b>\n\n"
-            "សូមផ្ញើ <b>Text</b> ណាមួយ:",
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="🔊 <b>Text to Voice</b>\n\n"
+                 "សំឡេងបច្ចុប្បន្ន: <b>👩 សំឡេងស្រី</b>\n\n"
+                 "សូមផ្ញើ <b>Text</b> ណាមួយ:",
             parse_mode="HTML",
             reply_markup=tts_keyboard(),
+            business_connection_id=biz_id,
+            direct_messages_topic_id=topic_id,
         )
 
     elif data == "action_back":
         context.user_data["state"] = None
-        name = getattr(user, "last_name", "") or getattr(user, "first_name", "") or "បង"
-        await query.edit_message_text(
-            f"👋 សួស្តី {name}!\n\n"
-            "<b>ខ្ញុំជា QR &amp; Voice Bot</b>\n\n"
-            "<blockquote>"
-            "👉 សូមជ្រើសរើសមុខងារ:\n"
-            "📝 បង្កើត QR Code — ផ្ញើ Text ឬ Link\n"
-            "📷 ស្កេន QR Code — ផ្ញើរូបភាព QR\n"
-            "🔊 Text to Voice — ផ្ញើ Text ហើយស្ដាប់សំឡេង"
-            "</blockquote>",
-            parse_mode="HTML",
-            reply_markup=main_menu_keyboard(),
-        )
+        await send_menu(context, chat_id, user, biz_id, topic_id)
 
 
 # ── QR generation ──────────────────────────────────────────────────────────────
