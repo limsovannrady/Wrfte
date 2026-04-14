@@ -345,7 +345,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data == "action_translate":
         log_activity(user, "ជ្រើស បកប្រែ", "")
-        lang_code = _user_translate_lang.get(user.id, "en")
+        lang_code = _user_translate_lang.get(user.id, "km")
         lang_name = LANGUAGES.get(lang_code, lang_code)
         await context.bot.send_message(
             chat_id=chat_id,
@@ -518,7 +518,7 @@ async def _translate_text(context, message, user, biz_id, topic_id, reply_to_msg
     text = message.text
     log_activity(user, "បកប្រែ", text[:80])
     quote = ReplyParameters(message_id=reply_to_msg_id) if reply_to_msg_id else None
-    target_lang = _user_translate_lang.get(user.id, "en")
+    target_lang = _user_translate_lang.get(user.id, "km")
     lang_name = LANGUAGES.get(target_lang, target_lang)
     translate_again_keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🔄 ប្តូរភាសា", callback_data="action_translate")],
@@ -553,7 +553,7 @@ async def language_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     user = update.effective_user
     log_activity(user, "ជ្រើស ភាសាបកប្រែ", "/language")
-    lang_code = _user_translate_lang.get(user.id, "en")
+    lang_code = _user_translate_lang.get(user.id, "km")
     lang_name = LANGUAGES.get(lang_code, lang_code)
     await context.bot.send_chat_action(chat_id=message.chat_id, action=constants.ChatAction.TYPING)
     await message.reply_text(
