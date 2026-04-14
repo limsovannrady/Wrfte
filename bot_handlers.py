@@ -106,7 +106,7 @@ _load_prefs()
 def main_menu_keyboard():
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("📝 បង្កើត QR Code", callback_data="action_generate"),
+            InlineKeyboardButton("📝 បង្កើត QR", callback_data="action_generate"),
             InlineKeyboardButton("📷 ស្កេន QR Code", callback_data="action_scan"),
         ],
         [
@@ -276,7 +276,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["state"] = "awaiting_text"
         await context.bot.send_message(
             chat_id=chat_id,
-            text="📝 <b>បង្កើត QR Code</b>\n\n"
+            text='<tg-emoji emoji-id="4954458300235121703">📋</tg-emoji> <b>បង្កើត QR</b>\n\n'
                  "សូមផ្ញើ <b>Text</b> ឬ <b>Link</b> ដែលអ្នកចង់ធ្វើ QR Code:",
             parse_mode="HTML",
             business_connection_id=biz_id,
