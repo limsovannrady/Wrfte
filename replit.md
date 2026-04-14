@@ -20,8 +20,10 @@ This project is a Python Telegram bot using `python-telegram-bot`. It runs with 
 
 - `/start` replies with a Khmer greeting in normal Telegram chats.
 - Telegram Business connection updates are logged and acknowledged when enabled.
-- Telegram Business chat text messages are handled via `business_message` and `edited_business_message` updates.
+- Telegram Business chat messages are handled via `business_message` and `edited_business_message` updates.
 - Business replies include the message's `business_connection_id`, which is required for sending through a Telegram Business connection.
+- Business direct-message topics are preserved with `direct_messages_topic_id` when Telegram provides one.
+- Incoming update types are logged to help diagnose Telegram Business and third-party connection issues.
 - Polling uses `Update.ALL_TYPES` so Telegram Business updates are received.
 
 ## Setup notes
