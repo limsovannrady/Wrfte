@@ -78,7 +78,6 @@ def tts_keyboard():
             InlineKeyboardButton("👨 សំឡេងប្រុស", callback_data="tts_male"),
             InlineKeyboardButton("👩 សំឡេងស្រី", callback_data="tts_female"),
         ],
-        [InlineKeyboardButton("🔙 ត្រឡប់ក្រោយ", callback_data="action_back")],
     ])
 
 
@@ -224,7 +223,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text="📝 <b>បង្កើត QR Code</b>\n\n"
                  "សូមផ្ញើ <b>Text</b> ឬ <b>Link</b> ដែលអ្នកចង់ធ្វើ QR Code:",
             parse_mode="HTML",
-            reply_markup=back_keyboard(),
             business_connection_id=biz_id,
             direct_messages_topic_id=topic_id,
         )
@@ -237,7 +235,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text="📷 <b>ស្កេន QR Code</b>\n\n"
                  "សូមផ្ញើ <b>រូបភាព QR Code</b> ដែលអ្នកចង់ស្កេន:",
             parse_mode="HTML",
-            reply_markup=back_keyboard(),
             business_connection_id=biz_id,
             direct_messages_topic_id=topic_id,
         )
