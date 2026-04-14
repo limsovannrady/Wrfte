@@ -22,6 +22,7 @@ This project is a Python Telegram bot using `python-telegram-bot`. It runs with 
 - Telegram Business connection updates are logged and acknowledged when enabled.
 - Telegram Business chat messages are handled via `business_message` and `edited_business_message` updates.
 - Business replies include the message's `business_connection_id`, which is required for sending through a Telegram Business connection.
+- Customer text messages receive `សួស្តីបង {last name}` using the Telegram sender's last name.
 - Business direct-message topics are preserved with `direct_messages_topic_id` when Telegram provides one.
 - Messages sent directly by the Telegram Business owner, or by bot senders, are ignored so the bot does not auto-reply after a human owner response.
 - Incoming update types are logged to help diagnose Telegram Business and third-party connection issues.

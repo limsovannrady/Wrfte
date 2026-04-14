@@ -153,7 +153,8 @@ async def business_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text.startswith("/start"):
         reply = "សួស្តី! Bot is ready for this Telegram Business chat."
     elif text:
-        reply = "សួស្តី! ខ្ញុំបានទទួលសាររបស់អ្នកហើយ។ Our team will reply soon."
+        last_name = getattr(message.from_user, "last_name", "") or ""
+        reply = f"សួស្តីបង {last_name}"
     else:
         reply = "សួស្តី! ខ្ញុំបានទទួល message របស់អ្នកហើយ។ Our team will reply soon."
 
